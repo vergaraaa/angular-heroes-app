@@ -7,7 +7,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Hero, Publisher } from '../../interfaces/hero.interface';
 import { HeroesService } from '../../services/heroes.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { switchMap } from 'rxjs';
+import { filter, switchMap, tap } from 'rxjs';
 import { ConfirmDialogComponent } from '../../components/confirm-dialog/confirm-dialog.component';
 
 @Component({
@@ -90,12 +90,28 @@ export class NewPageComponent implements OnInit {
       data: this.heroForm.value,
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
-      if (!result) return;
+    dialogRef
+      .afterClosed()
+      .pipe(
+        filter((result: boolean) => result),
+        switchMap(() => this.heroesService.deleteHeroById(this.currentHero.id)),
+        filter((deleted: boolean) => deleted)
+      )
+      .subscribe(() => {
+        this.router.navigate(['/heroes/list']);
+      });
 
-      this.heroesService.deleteHeroById(this.currentHero.id);
-      this.router.navigate(['/heroes/list']);
-    });
+    // dialogRef.afterClosed().subscribe((result) => {
+    //   if (!result) return;
+
+    //   this.heroesService
+    //     .deleteHeroById(this.currentHero.id)
+    //     .subscribe((deleted) => {
+    //       if (deleted) {
+    //         this.router.navigate(['/heroes/list']);
+    //       }
+    //     });
+    // });
   }
 
   showSnackbar(message: string): void {
